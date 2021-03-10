@@ -1,11 +1,9 @@
 <template>
   <div class="login-wrap">
-    <el-form
-      class="login-form"
-      :label-position="labelPosition"
-      label-width="80px"
-      :model="formdata"
-    >
+    <el-form class="login-form"
+             :label-position="labelPosition"
+             label-width="80px"
+             :model="formdata">
       <h2>用户登录</h2>
       <el-form-item label="用户名">
         <el-input v-model="formdata.username"></el-input>
@@ -13,11 +11,9 @@
       <el-form-item label="密码">
         <el-input v-model="formdata.password"></el-input>
       </el-form-item>
-      <el-button
-        class="login-btn"
-        type="primary"
-        @click.prevent="handleLogin()"
-      >登录</el-button>
+      <el-button class="login-btn"
+                 type="primary"
+                 @click.prevent="handleLogin()">登录</el-button>
     </el-form>
   </div>
 </template>
@@ -34,34 +30,50 @@ export default {
     }
   },
   methods: {
-    handleLogin () {
-      this.$http.post('login', this.formdata).then(res => {
-        // console.log(res)
-        const {
-          // data,
-          meta: {
-            msg,
-            status
-          }
-        } = res.data
+    async handleLogin () {
+      // 希望让异步代码看起来像同步代码(美观)
+      // ES7 asyncc+await
 
-        if (status === 200) {
-          // 登录成功
-          // 1. 跳转home
-          this.$router.push({
-            name: 'home'
-          })
-          // 提示成功
-          this.$message.success(msg)
-        } else {
-          this.$message.warning(msg)
-        }
+      const res = await this.$http.post('login', this.formdata)
+      // console.log(res)
+      const {
+        // data,
+        meta: { msg, status }
+      } = res.data
 
-        // 2、提示成功 不成功
-        // 1. 提示信息
-      })
+      if (status === 200) {
+        // 登录成功
+        // 1. 跳转home
+        this.$router.push({
+          name: 'home'
+        })
+        // 提示成功
+        this.$message.success(msg)
+      } else {
+        // 不成功
+        this.$message.warning(msg)
+      }
+      // this.$http.post('login', this.formdata).then((res) => {
+      //   // console.log(res)
+      //   const {
+      //     // data,
+      //     meta: { msg, status }
+      //   } = res.data
+
+      //   if (status === 200) {
+      //     // 登录成功
+      //     // 1. 跳转home
+      //     this.$router.push({
+      //       name: 'home'
+      //     })
+      //     // 提示成功
+      //     this.$message.success(msg)
+      //   } else {
+      //     // 不成功
+      //     this.$message.warning(msg)
+      //   }
+      // })
     }
-
   }
 }
 </script>
