@@ -37,12 +37,14 @@ export default {
       const res = await this.$http.post('login', this.formdata)
       // console.log(res)
       const {
-        // data,
+        data,
         meta: { msg, status }
       } = res.data
 
       if (status === 200) {
         // 登录成功
+        // 0. 保存token
+        localStorage.setItem('token', data.token)
         // 1. 跳转home
         this.$router.push({
           name: 'home'
