@@ -4,7 +4,6 @@
     <!-- /首页  /用户管理 / 用户列表-->
     <el-breadcrumb separator-class="el-icon-arrow-right">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-      <el-breadcrumb-item>首页</el-breadcrumb-item>
       <el-breadcrumb-item>用户管理</el-breadcrumb-item>
       <el-breadcrumb-item>用户列表</el-breadcrumb-item>
     </el-breadcrumb>
@@ -14,15 +13,15 @@
         <el-input @clear="loadUserlist()"
                   clearable
                   placeholder="请输入内容"
-                  v-model="query"
+                  v-model="queryInfo.query"
                   class="input-search">
           <el-button slot="append"
-                     @click="serchUser()"
+                     @click="searchUser()"
                      icon="el-icon-search"></el-button>
         </el-input>
         <el-button type="success"
                    class="search-btn"
-                   @click="showAddUserDia">添加用户</el-button>
+                   @click="showAddUserDia()">添加用户</el-button>
       </el-col>
     </el-row>
 
@@ -35,16 +34,15 @@
                        width="60"
                        type="index">
       </el-table-column>
-      <el-table-column prop="username"
-                       label="用户名"
-                       width="120">
+      <el-table-column prop="userName"
+                       label="用户名">
       </el-table-column>
-      <el-table-column prop="email"
-                       label="邮箱">
-      </el-table-column>
-      <el-table-column prop="mobile"
+      <el-table-column prop="userAccount"
                        label="电话">
       </el-table-column>
+      <!-- <el-table-column prop="email"
+                       label="邮箱">
+      </el-table-column> -->
 
       <el-table-column label="创建时间">
 
@@ -59,22 +57,25 @@
           {{userlist.row.create_time | fmtdate}}
         </template> -->
         <template slot-scope="scope">
-          {{scope.row.create_time | fmtdate}}
+          {{scope.row.userDate | fmtdate}}
         </template>
       </el-table-column>
 
       <el-table-column label="用户状态">
         <template slot-scope="scope">
-          <el-switch v-model="scope.row.mg_state"
-                     @change="changeMsgState(scope.row)"
+          <el-switch v-model="scope.row.userStatus"
+                     @change="userStatusChange(scope.row)"
                      active-color="#13ce66"
-                     inactive-color="#ff4949">
+                     inactive-color="#ff4949"
+                     :active-value="0"
+                     :inactive-value="1">
           </el-switch>
         </template>
       </el-table-column>
 
       <el-table-column prop="address"
-                       label="操作">
+                       label="操作"
+                       width="150px">
         <template slot-scope="scope">
           <el-button type="primary"
                      icon="el-icon-edit"
@@ -87,24 +88,23 @@
                      size="small"
                      circle
                      plain
-                     @click="showDeleUserMsgBox(scope.row.id)"></el-button>
-          <el-button type="success"
+                     @click="showDeleUserMsgBox(scope.row.userId)"></el-button>
+          <!-- <el-button type="success"
                      icon="el-icon-check"
                      size="small"
                      circle
                      plain
-                     @click="showSetUserRoleDia(scope.row)"></el-button>
+                     @click="showSetUserRoleDia(scope.row)"></el-button> -->
         </template>
       </el-table-column>
     </el-table>
     <!-- 4。分页 -->
-    <el-pagination class="
-                     el-pagination"
+    <el-pagination class="el-pagination"
                    @size-change="handleSizeChange"
                    @current-change="handleCurrentChange"
-                   :current-page="pagenum"
-                   :page-sizes="[2, 4, 6, 8]"
-                   :page-size="2"
+                   :current-page="queryInfo.current"
+                   :page-sizes="[1, 3, 5, 7, 9]"
+                   :page-size="queryInfo.limit"
                    layout="total, sizes, prev, pager, next, jumper"
                    :total="total">
     </el-pagination>
@@ -112,26 +112,30 @@
     <el-dialog title="添加用户"
                :visible.sync="dialogFormVisibleAdd"
                width="40%">
-      <el-form :model="form">
+      <el-form :model="form"
+               :rules="addRules">
         <el-form-item label="用户名"
-                      label-width="100px">
-          <el-input v-model="form.username"
+                      label-width="70px"
+                      prop="userName">
+          <el-input v-model="form.userName"
                     autocomplete="off"></el-input>
         </el-form-item>
 
         <el-form-item label="密码"
-                      label-width="100px">
-          <el-input v-model="form.password"
+                      label-width="70px"
+                      prop="userpwd">
+          <el-input v-model="form.userpwd"
                     autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="邮箱"
+        <!-- <el-form-item label="邮箱"
                       label-width="100px">
           <el-input v-model="form.email"
                     autocomplete="off"></el-input>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="电话"
-                      label-width="100px">
-          <el-input v-model="form.mobile"
+                      label-width="70px"
+                      prop="userAccount">
+          <el-input v-model="form.userAccount"
                     autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
@@ -147,22 +151,24 @@
     <el-dialog title="编辑用户"
                :visible.sync="dialogFormVisibleEdit"
                width="40%">
-      <el-form :model="form">
+      <el-form :model="form"
+               :rules="addRules">
         <el-form-item label="用户名"
-                      label-width="100px">
-          <el-input v-model="form.username"
-                    disabled
+                      label-width="100px"
+                      prop="userName">
+          <el-input v-model="form.userName"
                     autocomplete="off"></el-input>
         </el-form-item>
 
-        <el-form-item label="邮箱"
+        <!-- <el-form-item label="邮箱"
                       label-width="100px">
           <el-input v-model="form.email"
                     autocomplete="off"></el-input>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="电话"
-                      label-width="100px">
-          <el-input v-model="form.mobile"
+                      label-width="100px"
+                      prop="userAccount">
+          <el-input v-model="form.userAccount"
                     autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
@@ -215,37 +221,52 @@
 export default {
   data () {
     return {
-      query: '',
-      // 表格绑定的数据
-      // username: "admin"
-      // email: "adsfad@qq.com"
-      // mobile: "12345678"
-      // create_time: 1486720211
-      // mg_state: true
-      // id: 500
-      // role_name: "超级管理员"
+      addRules: {
+        userAccount: [
+          { required: true, message: '用户为必填项', trigger: 'blur' },
+          { min: 11, max: 11, message: '手机号长度', trigger: 'blur' }
+        ],
+        userpwd: [
+          { required: true, message: '密码为必填项', trigger: 'blur' },
+          { min: 6, max: 16, message: '长度为6~16个字符', trigger: 'blur' }
+        ],
+        userName: [
+          { required: true, message: '用户名为必填项', trigger: 'blur' },
+          { min: 3, max: 16, message: '长度为3~16个字符', trigger: 'blur' }
+        ]
+      },
+      queryInfo: {
+        query: '',
+        current: 1,
+        limit: 5
+      },
       userlist: [],
-      // 分页相关数据
-      total: -1,
-      pagenum: 1,
-      pagesize: 2,
+      total: 0,
+      // 表单属性
+      form: {
+        userName: '',
+        userpwd: '',
+        userAccount: ''
+      },
 
       dialogFormVisibleAdd: false,
       dialogFormVisibleEdit: false,
       dialogFormVisibleRol: false,
-      // 表单属性
-      form: {
-        username: '',
-        password: '',
-        email: '',
-        mobile: ''
-      },
+
       currRoleId: -1,
       currUserId: -1,
       currUserNmae: '',
       roles: []
     }
   },
+
+  // beforeCreate () {
+  //   const token = localStorage.getItem('token')
+
+  //   if (!token) {
+  //     this.$router.push({ name: 'login' })
+  //   }
+  // },
 
   created () {
     // flag判断是否是第一次进入页面
@@ -255,36 +276,42 @@ export default {
 
   methods: {
     // 分配角色 - 更改角色
-    async serRole () {
-      const res = await this.$http.put(`users/${this.currUserId}/role`, { rid: this.currRoleId })
-      console.log(res)
-      this.dialogFormVisibleRol = false
-    },
+    // async serRole () {
+    //   const res = await this.$http.put(`users/${this.currUserId}/role`, { rid: this.currRoleId })
+    //   console.log(res)
+    //   this.dialogFormVisibleRol = false
+    // },
     // 分配角色 - 打开对话框
-    async showSetUserRoleDia (user) {
-      this.currUserNmae = user.username
-      // 给currUserID赋值
-      this.currUserId = user.id
-      // 获取所有角色
-      const res1 = await this.$http.get('roles')
-      this.roles = res1.data.data
-      // 获取当前角色的角色id->rid
-      const res = await this.$http.get(`users/${user.id}`)
-      this.currRoleId = res.data.data.rid
+    // async showSetUserRoleDia (user) {
+    //   this.currUserNmae = user.username
+    //   // 给currUserID赋值
+    //   this.currUserId = user.id
+    //   // 获取所有角色
+    //   const res1 = await this.$http.get('roles')
+    //   this.roles = res1.data.data
+    //   // 获取当前角色的角色id->rid
+    //   const res = await this.$http.get(`users/${user.id}`)
+    //   this.currRoleId = res.data.data.rid
 
-      this.dialogFormVisibleRol = true
-    },
+    //   this.dialogFormVisibleRol = true
+    // },
     // 修改状态
-    async changeMsgState (user) {
-      const res = await this.$http.put(`users/${user.id}/state/${user.mg_state}`)
-      console.log(res)
+    async userStatusChange (user) {
+      const res = await this.$http.post(`userStatusChange/${user.userId}/${user.userStatus}`)
+
+      this.$message.success(res.data.message)
     },
     // 编辑用户 - 发送请求
     async editUser () {
-      const res = await this.$http.put(`users/${this.form.id}`, this.form)
+      const res = await this.$http.post('userUpdate', this.form)
 
       this.dialogFormVisibleEdit = false
-      this.getUserList()
+      if (res.data.code === 200) {
+        this.$message.success(res.data.message)
+        this.queryInfo.current = 1
+        this.getUserList()
+      }
+
       console.log(res)
     },
     // 编辑用户 - 显示对话框
@@ -299,16 +326,13 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
-        const res = await this.$http.delete(`users/${userId}`)
+        const res = await this.$http.post(`userDelete/${userId}`)
         console.log(res)
-        if (res.data.meta.status === 200) {
-          this.pagenum = 1
+        if (res.data.code === 200) {
+          this.queryInfo.current = 1
           this.getUserList()
 
-          this.$message({
-            type: 'success',
-            message: res.data.meta.msg
-          })
+          this.$message.success(res.data.message)
         }
       }).catch(() => {
         this.$message({
@@ -321,18 +345,18 @@ export default {
     // 添加用户 - 发送请求
     async addUser () {
       this.dialogFormVisibleAdd = false
-      const res = await this.$http.post('users', this.form)
+      const res = await this.$http.post('userAdd', this.form)
       console.log(res)
-      const { meta: { status, msg } } = res.data
-      if (status === 201) {
+
+      if (res.data.code === 200) {
         // 提示成功
-        this.$message.success(msg)
+        this.$message.success(res.data.message)
         // 更新视图
         this.getUserList()
         // 清空文本框
         this.form = {}
       } else {
-        this.$message.warning(msg)
+        this.$message.warning(res.data.message)
       }
     },
     // 添加用户 - 显示对话框
@@ -344,20 +368,20 @@ export default {
     loadUserlist () {
       this.getUserList()
     },
-    serchUser () {
+    searchUser () {
       // 按照input绑定的query参数发送请求
       this.getUserList()
     },
     handleSizeChange (val) {
       console.log(`每页 ${val} 条`)
 
-      this.pagesize = val
+      this.queryInfo.limit = val
       this.getUserList()
     },
     handleCurrentChange (val) {
       console.log(`当前页: ${val}`)
 
-      this.pagenum = val
+      this.queryInfo.current = val
       this.getUserList()
     },
     // 获取用户列表
@@ -365,29 +389,25 @@ export default {
       const AUTH_TOKEN = localStorage.getItem('token')
       this.$http.defaults.headers.common.Authorization = AUTH_TOKEN
 
-      const res = await this.$http.get(`users?query=${this.query}&pagenum=${this.pagenum}&pagesize=${this.pagesize}`)
-      console.log(res)
-      const { meta: { status, msg }, data: { users, total } } = res.data
-      if (status === 200) {
+      // const res = await this.$http.get(`usersList?query=${this.query}&pagenum=${this.pagenum}&pagesize=${this.pagesize}`)
+      const res = await this.$http.get('usersList', { params: this.queryInfo })
+
+      if (res.data.code === 200) {
         // 1.给表格数据复制
-        this.userlist = users
+        this.userlist = res.data.data.records
+        console.log(this.userlist)
         // 2.给total赋值
-        this.total = total
+        this.total = res.data.data.total
         // 3.提示
         if (flag) {
-          this.$message.success(msg)
+          this.$message.success(res.data.message)
           // flag判断是否是第一次进入页面
           flag = false
         }
       } else {
-        this.$message.warning(msg)
+        this.$message.warning(res.data.message)
       }
     }
-
-    // isFirst (flag) {
-    //   flag = false
-    //   return flag
-    // }
 
   }
 }

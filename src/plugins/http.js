@@ -3,7 +3,8 @@ import axios from 'axios'
 const MyHttpServer = {}
 
 MyHttpServer.install = (Vue) => {
-  axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
+  // axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
+  axios.defaults.baseURL = 'http://127.0.0.1:8005/api/admin'
   // 添加实例方法
   Vue.prototype.$http = axios
 }
@@ -14,7 +15,13 @@ axios.interceptors.request.use(
   function (config) {
     // console.group("触发全局请求拦截器");
     // console.log(config);
-    if (config.url !== 'login') {
+    const whiteList = ['/login', '/goods', '/register']
+    const fn = (url) => {
+      return whiteList.some((item) => {
+        return url.startsWith(item)
+      })
+    }
+    if (fn(config.url)) {
       const AUTH_TOKEN = localStorage.getItem('token')
       config.headers.Authorization = AUTH_TOKEN
     }
